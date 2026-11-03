@@ -1,9 +1,9 @@
 const fs = require("fs");
+const path = require("path");
 
-// This file is only here to make interacting with the Dapp easier,
-// feel free to ignore it if you don't need it.
+const codinomes = ["roberta", "nome1", "nome2", "nome3", "nome4", "nome5"];
 
-task("faucet", "Sends ETH and tokens to an address")
+task("faucet", "Sends ETH and tokens to a registered user")
   .addPositionalParam("receiver", "The address that will receive them")
   .setAction(async ({ receiver }, { ethers }) => {
     if (network.name === "hardhat") {
@@ -14,33 +14,50 @@ task("faucet", "Sends ETH and tokens to an address")
       );
     }
 
-    const addressesFile =
-      __dirname + "/../frontend/src/contracts/contract-address.json";
+    const addressesFile = path.join(
+      __dirname,
+      "../frontend/src/contracts/contract-address.json"
+    );
 
     if (!fs.existsSync(addressesFile)) {
-      console.error("You need to deploy your contract first");
-      return;
+      throw new Error("You need to deploy your contract first.");
     }
 
-    const addressJson = fs.readFileSync(addressesFile);
-    const address = JSON.parse(addressJson);
+    const { Token: contractAddress } = JSON.parse(
+      fs.readFileSync(addressesFile, "utf8")
+    );
 
-    if ((await ethers.provider.getCode(address.Token)) === "0x") {
-      console.error("You need to deploy your contract first");
-      return;
+    if (!contractAddress || (await ethers.provider.getCode(contractAddress)) === "0x") {
+      throw new Error("You need to deploy your contract first.");
     }
 
-    const token = await ethers.getContractAt("Token", address.Token);
+    const normalizedReceiver = ethers.utils.getAddress(receiver);
+    const token = await ethers.getContractAt("Turing", contractAddress);
+    let codinome;
+    for (const name of codinomes) {
+      const userAddress = await token.users(name);
+      if (userAddress.toLowerCase() === normalizedReceiver.toLowerCase()) {
+        codinome = name;
+        break;
+      }
+    }
+
+    if (!codinome) {
+      throw new Error(
+        "Tokens can only be issued to an address registered to a codinome."
+      );
+    }
+
     const [sender] = await ethers.getSigners();
 
-    const tx = await token.transfer(receiver, 100);
+    const tx = await token.issueToken(codinome, 100);
     await tx.wait();
 
     const tx2 = await sender.sendTransaction({
-      to: receiver,
+      to: normalizedReceiver,
       value: ethers.constants.WeiPerEther,
     });
     await tx2.wait();
 
-    console.log(`Transferred 1 ETH and 100 tokens to ${receiver}`);
+    console.log(`Transferred 1 ETH and 100 tokens to ${normalizedReceiver}`);
   });

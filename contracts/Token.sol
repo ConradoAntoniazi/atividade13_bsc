@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
@@ -49,7 +49,7 @@ contract Turing is ERC20 {
     }
 
     modifier validCodinome(string memory codinome) {
-        require(!codinames[users[codinome]].equal(""), "Erro: condinome invalido!");
+        require(users[codinome] != address(0), "Erro: codinome invalido!");
         _;
     }
 
@@ -78,6 +78,7 @@ contract Turing is ERC20 {
         require(qtde_de_Turings > 0 && qtde_de_Turings <= 2, "qtde_de_Turings deve ser maior que 0, e menor ou igual a 2.");
         require(hasVote[codinames[msg.sender]][codinome] == false, "Um mesmo usuario so pode votar uma vez em um mesmo codinome.");
 
+        hasVote[codinames[msg.sender]][codinome] = true;
         _mint(users[codinome], qtde_de_Turings);
         countVote[codinames[msg.sender]] += 1;
 
