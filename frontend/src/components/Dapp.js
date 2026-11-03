@@ -29,6 +29,7 @@ export class Dapp extends React.Component {
       balance: undefined,
       registeredCodename: undefined,
       isSuperuser: false,
+      votingEnabled: true,
       ranking: [],
       txBeingSent: undefined,
       transactionError: undefined,
@@ -171,6 +172,18 @@ export class Dapp extends React.Component {
             />
           )}
 
+          {this.state.isSuperuser && (
+            <div className="admin-status-banner" style={{ marginBottom: "1rem" }}>
+              <strong>Status da votação:</strong>{" "}
+              <span style={{
+                color: this.state.votingEnabled ? "#1ecf8e" : "#f5b942",
+                fontWeight: 700,
+              }}>
+                {this.state.votingEnabled ? "ABERTA" : "FECHADA"}
+              </span>
+            </div>
+          )}
+
           <div className="section-heading">
             <div>
               <span className="eyebrow">PARTICIPE</span>
@@ -188,17 +201,24 @@ export class Dapp extends React.Component {
                 </div>
                 <h3>Reconheça uma boa ideia</h3>
                 <p className="card-description">
-                  Escolha um aluno e atribua de 1 a 2 Turings. Um voto por aluno,
-                  sem votar em si mesmo.
+                  {this.state.votingEnabled
+                    ? "Escolha um aluno e atribua de 1 a 2 Turings. Um voto por aluno, sem votar em si mesmo."
+                    : "A votação está fechada no momento. Aguarde a abertura por um superusuário."}
                 </p>
-                <StudentActionForm
-                  actionLabel="vote"
-                  codinomes={voteCodinames}
-                  maxAmount="2"
-                  onSubmit={this._vote}
-                  submitLabel="Enviar voto"
-                  tokenSymbol={this.state.tokenData.symbol}
-                />
+                {this.state.votingEnabled ? (
+                  <StudentActionForm
+                    actionLabel="vote"
+                    codinomes={voteCodinames}
+                    maxAmount="2"
+                    onSubmit={this._vote}
+                    submitLabel="Enviar voto"
+                    tokenSymbol={this.state.tokenData.symbol}
+                  />
+                ) : (
+                  <button className="btn btn-secondary" type="button" disabled>
+                    Votação indisponível
+                  </button>
+                )}
               </section>
             )}
 
@@ -210,8 +230,17 @@ export class Dapp extends React.Component {
                 </div>
                 <h3>Emita novos Turings</h3>
                 <p className="card-description">
-                  Distribua tokens diretamente para um aluno cadastrado.
+                  Distribua tokens diretamente para um aluno cadastrado e controle o status da votação.
                 </p>
+                <div style={{ marginBottom: "1rem" }}>
+                  <button
+                    className="btn btn-primary"
+                    type="button"
+                    onClick={() => this._toggleVoting(!this.state.votingEnabled)}
+                  >
+                    {this.state.votingEnabled ? "Fechar votação" : "Abrir votação"}
+                  </button>
+                </div>
                 <StudentActionForm
                   actionLabel="issue"
                   codinomes={STUDENT_CODINAMES}
@@ -320,6 +349,7 @@ export class Dapp extends React.Component {
         balance: undefined,
         registeredCodename: undefined,
         isSuperuser: false,
+        votingEnabled: true,
         ranking: [],
         networkError: "Conecte a carteira à rede local Hardhat (Chain ID 31337).",
       });
@@ -346,12 +376,13 @@ export class Dapp extends React.Component {
       balance: undefined,
       registeredCodename: undefined,
       isSuperuser: false,
+      votingEnabled: true,
       ranking: [],
       networkError: undefined,
     });
 
     try {
-      const [name, symbol, registeredUsers, isSuperuser] = await Promise.all([
+      const [name, symbol, registeredUsers, isSuperuser, votingEnabled] = await Promise.all([
         this._token.name(),
         this._token.symbol(),
         Promise.all(
@@ -361,6 +392,7 @@ export class Dapp extends React.Component {
           }))
         ),
         this._hasSuperuserAccess(),
+        this._token.isVotingOpen(),
       ]);
 
       if (initializationId !== this.initializationId) return;
@@ -373,6 +405,7 @@ export class Dapp extends React.Component {
         tokenData: { name, symbol },
         registeredCodename,
         isSuperuser,
+        votingEnabled,
       });
 
       await this._updateBalances(userAddress, initializationId);
@@ -417,7 +450,7 @@ export class Dapp extends React.Component {
   ) {
     if (!userAddress || !this._token) return;
 
-    const [balance, entries] = await Promise.all([
+    const [balance, entries, votingEnabled] = await Promise.all([
       this._token.balanceOf(userAddress),
       Promise.all(
         STUDENT_CODINAMES.map(async (codinome) => {
@@ -426,6 +459,7 @@ export class Dapp extends React.Component {
           return { codinome, balance: studentBalance };
         })
       ),
+      this._token.isVotingOpen(),
     ]);
 
     if (initializationId !== this.initializationId) return;
@@ -436,7 +470,7 @@ export class Dapp extends React.Component {
       }
       return left.balance.gt(right.balance) ? -1 : 1;
     });
-    this.setState({ balance, ranking: entries, networkError: undefined });
+    this.setState({ balance, ranking: entries, votingEnabled, networkError: undefined });
   }
 
   _transferTokens = (to, amount) =>
@@ -448,7 +482,15 @@ export class Dapp extends React.Component {
   _issueTokens = (codinome, amount) =>
     this._sendTransaction(() => this._token.issueToken(codinome, amount));
 
-  async _sendTransaction(sendTransaction) {
+  _toggleVoting = async (shouldOpen) => {
+    const action = shouldOpen ? "votingOn" : "votingOff";
+    await this._sendTransaction(
+      () => this._token[action](),
+      () => this.setState({ votingEnabled: shouldOpen })
+    );
+  };
+
+  async _sendTransaction(sendTransaction, onSuccess) {
     try {
       this._dismissTransactionError();
       const transaction = await sendTransaction();
@@ -456,6 +498,9 @@ export class Dapp extends React.Component {
       const receipt = await transaction.wait();
       if (receipt.status === 0) {
         throw new Error("A transação foi rejeitada pela rede.");
+      }
+      if (onSuccess) {
+        await onSuccess();
       }
       await this._updateBalances();
     } catch (error) {
@@ -491,6 +536,7 @@ export class Dapp extends React.Component {
       balance: undefined,
       registeredCodename: undefined,
       isSuperuser: false,
+      votingEnabled: true,
       ranking: [],
       txBeingSent: undefined,
       transactionError: undefined,

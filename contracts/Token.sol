@@ -67,6 +67,10 @@ contract Turing is ERC20 {
         voting = false;
     }
 
+    function isVotingOpen() public view returns (bool) {
+        return voting;
+    }
+
     function issueToken(string memory codinome, uint256 qtde_de_Turings) public onlyAdmin() validCodinome(codinome) {
         _mint(users[codinome], qtde_de_Turings);
     }

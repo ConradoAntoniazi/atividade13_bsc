@@ -126,11 +126,14 @@ describe("Turing contract", function () {
     it("allows only an administrator to change voting status", async function () {
       const { token, nome1, nome2 } = await loadFixture(deployTokenFixture);
 
+      expect(await token.isVotingOpen()).to.equal(true);
       await expect(token.connect(nome1).votingOff()).to.be.revertedWith(
         "Apenas o dono do contrato ou a Roberta podem executar essa acao!"
       );
       await token.votingOff();
+      expect(await token.isVotingOpen()).to.equal(false);
       await token.votingOn();
+      expect(await token.isVotingOpen()).to.equal(true);
       await expect(token.connect(nome2).vote("nome1", 1))
         .to.emit(token, "Transfer")
         .withArgs(ethers.constants.AddressZero, nome1.address, 1);
