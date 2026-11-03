@@ -88,6 +88,8 @@ contract Turing is ERC20 {
 
         if(countVote[codinames[msg.sender]] == 10) {
             _mint(msg.sender, 1);
+            countVote[codinames[msg.sender]] = 0;
         }
+
     }
 }
