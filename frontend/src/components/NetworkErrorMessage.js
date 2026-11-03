@@ -3,7 +3,7 @@ import React from "react";
 export function NetworkErrorMessage({ message, dismiss }) {
   return (
     <div className="alert alert-danger" role="alert">
-      {message}
+      <strong>Não foi possível conectar.</strong> {message}
       <button
         type="button"
         className="close"

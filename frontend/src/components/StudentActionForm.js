@@ -16,11 +16,11 @@ export function StudentActionForm({
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form className="action-form" onSubmit={handleSubmit}>
       <div className="form-group">
-        <label htmlFor={`${actionLabel}-codinome`}>Codinome do aluno</label>
+        <label htmlFor={`${actionLabel}-codinome`}>Aluno</label>
         <select
-          className="form-control"
+          className="form-control form-control-custom"
           id={`${actionLabel}-codinome`}
           name="codinome"
           required
@@ -38,7 +38,7 @@ export function StudentActionForm({
           Quantidade de {tokenSymbol}
         </label>
         <input
-          className="form-control"
+          className="form-control form-control-custom"
           id={`${actionLabel}-amount`}
           type="number"
           name="amount"
@@ -53,7 +53,7 @@ export function StudentActionForm({
           </small>
         )}
       </div>
-      <button className="btn btn-primary" type="submit">
+      <button className="btn btn-primary action-submit" type="submit">
         {submitLabel}
       </button>
     </form>

@@ -74,7 +74,7 @@ export class Dapp extends React.Component {
 
     if (!this.state.tokenData || !this.state.balance) {
       return this.state.networkError ? (
-        <main className="container p-4">
+        <main className="app-shell">
           <div className="alert alert-danger" role="alert">
             {this.state.networkError}
           </div>
@@ -96,108 +96,178 @@ export class Dapp extends React.Component {
     );
 
     return (
-      <main className="container p-4">
-        <header>
-          <h1>
-            {this.state.tokenData.name} ({this.state.tokenData.symbol})
-          </h1>
-          <p>
-            Carteira: <b>{this.state.selectedAddress}</b>
-          </p>
-          <p>
-            Perfil:{" "}
-            <b>
-              {this.state.isSuperuser
-                ? "Superusuário"
-                : this.state.registeredCodename
-                  ? `Usuário registrado (${this.state.registeredCodename})`
-                  : "Carteira não cadastrada"}
-            </b>
-          </p>
-          <p>
-            Seu saldo:{" "}
-            <b>
-              {this.state.balance.toString()} {this.state.tokenData.symbol}
-            </b>
-          </p>
+      <main className="app-shell">
+        <header className="topbar">
+          <div className="brand" aria-label="Turing">
+            <span className="brand-mark">T</span>
+            <span className="brand-name">turing<span>.</span></span>
+          </div>
+          <div className="topbar-network">
+            <span className="network-indicator" />
+            Rede local
+          </div>
         </header>
 
-        {this.state.networkError && (
-          <div className="alert alert-warning" role="alert">
-            {this.state.networkError}
-            <button
-              type="button"
-              className="close"
-              aria-label="Fechar"
-              onClick={this._dismissNetworkError}
-            >
-              <span aria-hidden="true">&times;</span>
-            </button>
+        <section className="dashboard-hero">
+          <div className="hero-copy">
+            <span className="eyebrow">ECOSSISTEMA DE RECONHECIMENTO</span>
+            <h1>Ideias que merecem <span>reconhecimento.</span></h1>
+            <p>
+              Vote, acompanhe os destaques da comunidade e veja os Turings em
+              movimento.
+            </p>
+            <div className="wallet-summary">
+              <span className="wallet-avatar">
+                {(this.state.registeredCodename || "W").charAt(0).toUpperCase()}
+              </span>
+              <span className="wallet-details">
+                <span className="wallet-role">
+                  {this.state.isSuperuser
+                    ? "SUPERUSUÁRIO"
+                    : this.state.registeredCodename
+                      ? `ALUNO · ${this.state.registeredCodename}`
+                      : "CARTEIRA CONECTADA"}
+                </span>
+                <span className="wallet-address" title={this.state.selectedAddress}>
+                  {this.state.selectedAddress}
+                </span>
+              </span>
+            </div>
           </div>
-        )}
+          <div className="balance-card">
+            <span className="balance-label">SEU SALDO</span>
+            <strong className="balance-value">{this.state.balance.toString()}</strong>
+            <span className="balance-symbol">{this.state.tokenData.symbol}</span>
+            <span className="balance-caption">Tokens na sua carteira</span>
+            <span className="balance-orbit orbit-one" />
+            <span className="balance-orbit orbit-two" />
+          </div>
+          <span className="hero-decoration hero-decoration-one" />
+          <span className="hero-decoration hero-decoration-two" />
+        </section>
 
-        {this.state.txBeingSent && (
-          <WaitingForTransactionMessage txHash={this.state.txBeingSent} />
-        )}
-        {this.state.transactionError && (
-          <TransactionErrorMessage
-            message={this._getRpcErrorMessage(this.state.transactionError)}
-            dismiss={this._dismissTransactionError}
-          />
-        )}
+        <div className="dashboard-content">
+          {this.state.networkError && (
+            <div className="alert alert-warning app-alert" role="alert">
+              {this.state.networkError}
+              <button
+                type="button"
+                className="close"
+                aria-label="Fechar"
+                onClick={this._dismissNetworkError}
+              >
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+          )}
 
-        {this.state.registeredCodename && voteCodinames.length > 0 && (
-          <section className="card card-body mb-4">
-            <h2>Votar</h2>
-            <p>
-              Escolha um aluno e atribua de 1 a 2 Turings. Não é permitido votar
-              em si mesmo nem votar duas vezes no mesmo aluno.
-            </p>
-            <StudentActionForm
-              actionLabel="vote"
-              codinomes={voteCodinames}
-              maxAmount="2"
-              onSubmit={this._vote}
-              submitLabel="Enviar voto"
-              tokenSymbol={this.state.tokenData.symbol}
-            />
-          </section>
-        )}
-
-        {this.state.isSuperuser && (
-          <section className="card card-body mb-4">
-            <h2>Emitir Turings</h2>
-            <p>
-              Esta ação administrativa emite tokens diretamente para o aluno
-              selecionado.
-            </p>
-            <StudentActionForm
-              actionLabel="issue"
-              codinomes={STUDENT_CODINAMES}
-              onSubmit={this._issueTokens}
-              submitLabel="Emitir tokens"
-              tokenSymbol={this.state.tokenData.symbol}
-            />
-          </section>
-        )}
-
-        <Ranking
-          entries={this.state.ranking}
-          tokenSymbol={this.state.tokenData.symbol}
-        />
-
-        <hr />
-        <section>
-          <h2>Transferir tokens</h2>
-          {this.state.balance.isZero() ? (
-            <NoTokensMessage selectedAddress={this.state.selectedAddress} />
-          ) : (
-            <Transfer
-              transferTokens={this._transferTokens}
-              tokenSymbol={this.state.tokenData.symbol}
+          {this.state.txBeingSent && (
+            <WaitingForTransactionMessage txHash={this.state.txBeingSent} />
+          )}
+          {this.state.transactionError && (
+            <TransactionErrorMessage
+              message={this._getRpcErrorMessage(this.state.transactionError)}
+              dismiss={this._dismissTransactionError}
             />
           )}
-        </section>
+
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">PARTICIPE</span>
+              <h2>Faça sua jogada</h2>
+            </div>
+            <span className="section-note">Ações disponíveis para sua carteira</span>
+          </div>
+
+          <div className="action-grid">
+            {this.state.registeredCodename && voteCodinames.length > 0 && (
+              <section className="feature-card vote-card">
+                <div className="card-heading">
+                  <span className="action-icon vote-icon" aria-hidden="true">↗</span>
+                  <span className="card-tag">VOTO DA COMUNIDADE</span>
+                </div>
+                <h3>Reconheça uma boa ideia</h3>
+                <p className="card-description">
+                  Escolha um aluno e atribua de 1 a 2 Turings. Um voto por aluno,
+                  sem votar em si mesmo.
+                </p>
+                <StudentActionForm
+                  actionLabel="vote"
+                  codinomes={voteCodinames}
+                  maxAmount="2"
+                  onSubmit={this._vote}
+                  submitLabel="Enviar voto"
+                  tokenSymbol={this.state.tokenData.symbol}
+                />
+              </section>
+            )}
+
+            {this.state.isSuperuser && (
+              <section className="feature-card issue-card">
+                <div className="card-heading">
+                  <span className="action-icon issue-icon" aria-hidden="true">✦</span>
+                  <span className="card-tag">CONTROLE ADMINISTRATIVO</span>
+                </div>
+                <h3>Emita novos Turings</h3>
+                <p className="card-description">
+                  Distribua tokens diretamente para um aluno cadastrado.
+                </p>
+                <StudentActionForm
+                  actionLabel="issue"
+                  codinomes={STUDENT_CODINAMES}
+                  onSubmit={this._issueTokens}
+                  submitLabel="Emitir tokens"
+                  tokenSymbol={this.state.tokenData.symbol}
+                />
+              </section>
+            )}
+
+            {!this.state.registeredCodename && !this.state.isSuperuser && (
+              <section className="feature-card access-card">
+                <span className="action-icon access-icon" aria-hidden="true">i</span>
+                <div>
+                  <h3>Carteira sem perfil de aluno</h3>
+                  <p className="card-description">
+                    Você pode acompanhar o ranking e transferir tokens. Para
+                    votar, conecte uma carteira cadastrada.
+                  </p>
+                </div>
+              </section>
+            )}
+          </div>
+
+          <div className="lower-grid">
+            <section className="panel ranking-panel">
+              <Ranking
+                entries={this.state.ranking}
+                tokenSymbol={this.state.tokenData.symbol}
+              />
+            </section>
+
+            <section className="panel transfer-panel">
+              <div className="panel-heading">
+                <span className="action-icon transfer-icon" aria-hidden="true">⇄</span>
+                <div>
+                  <span className="eyebrow">MOVIMENTE SEUS TOKENS</span>
+                  <h2>Transferir</h2>
+                </div>
+              </div>
+              {this.state.balance.isZero() ? (
+                <NoTokensMessage selectedAddress={this.state.selectedAddress} />
+              ) : (
+                <Transfer
+                  transferTokens={this._transferTokens}
+                  tokenSymbol={this.state.tokenData.symbol}
+                />
+              )}
+            </section>
+          </div>
+
+          <footer className="app-footer">
+            <span>TURING · {this.state.tokenData.symbol}</span>
+            <span>Conectado à blockchain local</span>
+          </footer>
+        </div>
       </main>
     );
   }
